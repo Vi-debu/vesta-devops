@@ -1,8 +1,9 @@
 trigger:
 - master
 
+# ALTETRAÇÃO AQUI: Mudamos o pool para usar os agentes gratuitos da FlyCI que não bloqueiam contas estudantis
 pool:
-  vmImage: 'windows-latest'
+  vmImage: 'flyci-amd64-ubuntu-22.04'
 
 variables:
   MAVEN_OPTS: '-Dmaven.repo.local=$(Pipeline.Workspace)/.m2/repository'
