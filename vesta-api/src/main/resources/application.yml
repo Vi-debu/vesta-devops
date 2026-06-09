@@ -2,9 +2,9 @@ spring:
   application:
     name: vesta-api
   datasource:
-    url: ${DB_VESTA_URL:jdbc:oracle:thin:@localhost:1521/XEPDB1}
-    username: ${DB_VESTA_USER:vesta}
-    password: ${DB_VESTA_PASSWORD:vesta}
+    url: ${DB_VESTA_URL}
+    username: ${DB_VESTA_USER}
+    password: ${DB_VESTA_PASSWORD}
     driver-class-name: oracle.jdbc.OracleDriver
   jpa:
     hibernate:
@@ -30,11 +30,11 @@ spring:
   ai:
     azure:
       openai:
-        api-key: ${AZURE_OPENAI_API_KEY:placeholder-key}
-        endpoint: ${AZURE_OPENAI_ENDPOINT:https://placeholder.openai.azure.com}
+        api-key: ${AZURE_OPENAI_API_KEY}
+        endpoint: ${AZURE_OPENAI_ENDPOINT}
         chat:
           options:
-            deployment-name: ${AZURE_OPENAI_DEPLOYMENT:gpt-4o}
+            deployment-name: ${AZURE_OPENAI_DEPLOYMENT}
             temperature: 0.3
             max-tokens: 1000
 
@@ -42,12 +42,12 @@ server:
   port: 8080
 
 jwt:
-  secret: ${Jwt__SecretKey:vesta-super-secret-key-do-not-use-in-production-min-256-bits}
+  secret: ${Jwt__SecretKey}
   expiration-ms: 86400000
 
 vesta:
   dotnet-service:
-    url: ${DOTNET_URL:http://localhost:5000}
+    url: ${DOTNET_URL}
 
 logging:
   level:
