@@ -350,7 +350,7 @@ WHERE ID_ESTOQUE = 1;
 ## Clonar Repositório
 
 ```bash
-git clone 
+git clone https://github.com/Vi-debu/vesta-devops.git
 ```
 
 ## Acessar Projeto
