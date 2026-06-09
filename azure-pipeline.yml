@@ -9,6 +9,7 @@ variables:
 
 stages:
 - stage: Build
+  displayName: Build Java
   jobs:
   - job: BuildJava
     steps:
@@ -46,3 +47,26 @@ stages:
         PathtoPublish: '$(Build.ArtifactStagingDirectory)'
         ArtifactName: 'drop'
         publishLocation: 'Container'
+
+- stage: Deploy
+  displayName: Deploy Azure Web App
+  dependsOn: Build
+  condition: succeeded()
+  jobs:
+  - deployment: DeployWebApp
+    environment: production
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - download: current
+            artifact: drop
+
+          - task: AzureWebApp@1
+            inputs:
+              azureSubscription: 'azure-vesta-connection'
+              appType: 'webAppLinux'
+              appName: 'vestags'
+              package: '$(Pipeline.Workspace)/drop/*.jar'
+              runtimeStack: 'JAVA|21-java21'
+              startUpCommand: 'java -jar /home/site/wwwroot/vesta-api-0.0.1-SNAPSHOT.jar'
