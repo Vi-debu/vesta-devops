@@ -1,0 +1,16 @@
+package br.com.fiap.vesta.repository;
+
+import br.com.fiap.vesta.domain.entity.Alerta;
+import br.com.fiap.vesta.domain.enums.TipoAlerta;
+import org.springframework.data.jpa.repository.JpaRepository;
+import java.util.List;
+import java.util.Optional;
+
+public interface AlertaRepository extends JpaRepository<Alerta, Long> {
+    List<Alerta> findByAbrigoIdAbrigoAndStStatus(Long idAbrigo, String stStatus);
+    List<Alerta> findByStStatus(String stStatus);
+    List<Alerta> findByAbrigoRegiaoIdRegiaoAndStStatus(Long idRegiao, String stStatus);
+    Optional<Alerta> findByAbrigoIdAbrigoAndTpAlertaAndStStatus(Long idAbrigo, TipoAlerta tipo, String status);
+    Optional<Alerta> findByAbrigoIdAbrigoAndTpAlertaAndRecursoIdRecursoAndStStatus(
+            Long idAbrigo, TipoAlerta tipo, Long idRecurso, String status);
+}
