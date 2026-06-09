@@ -1,224 +1,394 @@
-# Vesta API — Java / Spring Boot
-
-API REST principal da plataforma **Vesta**, sistema de gerenciamento de abrigos de emergência para órgãos públicos (prefeituras, defesa civil, governos estaduais). Projeto acadêmico FIAP Global Solution 2026 — 2TDSA.
-
----
-
-## Tecnologias
-
-| Camada | Stack |
-|---|---|
-| Linguagem | Java 17 |
-| Framework | Spring Boot 3.3.4 |
-| Segurança | Spring Security 6 + JWT (jjwt 0.12.6) |
-| Persistência | Spring Data JPA / Hibernate 6 + Oracle (ojdbc11 23.4) |
-| Migrations | Flyway |
-| Cache | Spring Cache + Caffeine |
-| Documentação | Springdoc OpenAPI 2.6.0 (Swagger UI) |
-| Integração | Spring Cloud OpenFeign (serviço .NET) |
-| IA | Spring AI — Azure OpenAI (gpt-4o) |
-| Testes | JUnit 5, Mockito, MockMvc |
-
----
-
-## Pré-requisitos
-
-- Java 17+
-- Maven 3.9+
-- Oracle Database (XEPDB1 ou cloud)
-- Variáveis de ambiente configuradas (ver seção abaixo)
-
----
-
-## Variáveis de Ambiente
-
-| Variável | Descrição | Padrão (dev) |
-|---|---|---|
-| `DB_VESTA_URL` | JDBC URL do Oracle | `jdbc:oracle:thin:@localhost:1521/XEPDB1` |
-| `DB_VESTA_USER` | Usuário do banco | `vesta` |
-| `DB_VESTA_PASSWORD` | Senha do banco | `vesta` |
-| `Jwt__SecretKey` | Chave secreta JWT (mín. 256 bits) | valor padrão inseguro |
-| `AZURE_OPENAI_API_KEY` | Chave da API Azure OpenAI (resumo IA) | _(vazio — IA desativada)_ |
-| `AZURE_OPENAI_ENDPOINT` | Endpoint do Azure OpenAI | _(vazio — IA desativada)_ |
-| `AZURE_OPENAI_DEPLOYMENT` | Nome do deployment no Azure OpenAI | `gpt-4o` |
-| `DOTNET_URL` | URL do serviço .NET de criticidade | `http://localhost:5000` |
-
----
-
-## Como executar
-
-```bash
-# entrar no diretório
-cd java/vesta-api
-
-# compilar e rodar testes
-mvn verify
-
-# subir a aplicação
-mvn spring-boot:run \
-  -DDB_VESTA_URL=jdbc:oracle:thin:@... \
-  -DDB_VESTA_USER=vesta \
-  -DDB_VESTA_PASSWORD=vesta \
-  -DJwt__SecretKey=sua-chave-secreta-256bits
-```
-
-A API sobe em `http://localhost:8080`.  
-Swagger UI disponível em `http://localhost:8080/swagger-ui.html`.
-
----
-
-## Endpoints
-
-Todos os endpoints (exceto `/api/auth/login`) exigem o header:
-
-```
-Authorization: Bearer <token>
-```
-
-### Autenticação
-
-| Método | Rota | Descrição | Perfis |
-|---|---|---|---|
-| `POST` | `/api/auth/login` | Obter token JWT | Público |
-
-### Abrigos
-
-| Método | Rota | Descrição | Perfis |
-|---|---|---|---|
-| `GET` | `/api/abrigos` | Listar abrigos (filtro opcional `?idRegiao=`) | Todos |
-| `GET` | `/api/abrigos/{id}` | Buscar abrigo por ID | Todos |
-| `POST` | `/api/abrigos` | Criar abrigo | ADMIN, GESTOR |
-| `PUT` | `/api/abrigos/{id}` | Atualizar abrigo | ADMIN, GESTOR |
-| `PATCH` | `/api/abrigos/{id}/status` | Atualizar status (`?status=ATIVO\|LOTADO\|INTERDITADO\|INATIVO`) | ADMIN, GESTOR |
-
-### Famílias e Acolhimento
-
-| Método | Rota | Descrição | Perfis |
-|---|---|---|---|
-| `GET` | `/api/abrigos/{idAbrigo}/familias` | Listar famílias do abrigo | Todos |
-| `GET` | `/api/abrigos/{idAbrigo}/familias/{idFamilia}` | Buscar família | Todos |
-| `GET` | `/api/abrigos/{idAbrigo}/familias/{idFamilia}/pessoas` | Listar pessoas da família | Todos |
-| `POST` | `/api/abrigos/{idAbrigo}/familias/acolhimento` | Registrar acolhimento de família | ADMIN, GESTOR, OPERADOR |
-| `POST` | `/api/abrigos/{idAbrigo}/familias/{idFamilia}/saida` | Registrar saída de família | ADMIN, GESTOR, OPERADOR |
-
-### Estoque
-
-| Método | Rota | Descrição | Perfis |
-|---|---|---|---|
-| `GET` | `/api/estoques/abrigo/{idAbrigo}` | Listar estoque do abrigo | Todos |
-| `POST` | `/api/estoques/movimentacao` | Registrar movimentação de recurso | ADMIN, GESTOR, OPERADOR |
-| `PATCH` | `/api/estoques/{idEstoque}/minimo` | Atualizar quantidade mínima | ADMIN, GESTOR |
-
-### Ocorrências
-
-| Método | Rota | Descrição | Perfis |
-|---|---|---|---|
-| `GET` | `/api/ocorrencias/abrigo/{idAbrigo}` | Listar ocorrências do abrigo | Todos |
-| `POST` | `/api/ocorrencias` | Registrar ocorrência | ADMIN, GESTOR, OPERADOR |
-| `PATCH` | `/api/ocorrencias/{id}/status` | Atualizar status da ocorrência | ADMIN, GESTOR, OPERADOR |
-
-### Solicitações de Recursos
-
-| Método | Rota | Descrição | Perfis |
-|---|---|---|---|
-| `GET` | `/api/solicitacoes` | Listar solicitações (filtro `?idAbrigo=`) | Todos |
-| `POST` | `/api/solicitacoes` | Abrir solicitação | ADMIN, GESTOR, OPERADOR |
-| `PATCH` | `/api/solicitacoes/{id}/status` | Avançar status da solicitação | ADMIN, GESTOR |
-
-### Transferências
-
-| Método | Rota | Descrição | Perfis |
-|---|---|---|---|
-| `GET` | `/api/transferencias` | Listar transferências | Todos |
-| `POST` | `/api/transferencias` | Solicitar transferência de família | ADMIN, GESTOR |
-| `PATCH` | `/api/transferencias/{id}/aprovar` | Aprovar e executar transferência | ADMIN, GESTOR |
-
-### Alertas
-
-| Método | Rota | Descrição | Perfis |
-|---|---|---|---|
-| `GET` | `/api/alertas` | Listar alertas ativos | Todos |
-| `GET` | `/api/alertas/abrigo/{idAbrigo}` | Alertas de um abrigo | Todos |
-| `PATCH` | `/api/alertas/{id}/resolver` | Resolver alerta | ADMIN, GESTOR, OPERADOR |
-
-### Indicadores e Criticidade
-
-| Método | Rota | Descrição | Perfis |
-|---|---|---|---|
-| `GET` | `/api/indicadores/ranking` | Ranking de abrigos por criticidade | ADMIN, GESTOR |
-| `GET` | `/api/indicadores/abrigo/{id}` | Indicadores de criticidade de um abrigo | Todos |
-
-### Assistente Operacional IA
-
-| Método | Rota | Descrição | Perfis |
-|---|---|---|---|
-| `POST` | `/api/assistente` | Fazer pergunta ao assistente operacional | ADMIN, GESTOR |
-| `GET` | `/api/assistente/health` | Verificar disponibilidade do assistente | Todos |
-
----
-
-## Regras de Negócio
-
-- Abrigo não aceita novos ocupantes quando está no status `LOTADO` ou `INTERDITADO` (a restrição real é capacidade, não o label)
-- Status dos abrigos: `ATIVO` ↔ `LOTADO` (reversível por saída/transferência) | `INTERDITADO` | `INATIVO` — a transição não é linear
-- Estoque com quantidade abaixo do mínimo gera `Alerta` automaticamente
-- Fluxo de solicitação: `ABERTA` → `EM_ANALISE` → `EM_ATENDIMENTO` → `CONCLUIDA`
-- Transferência só é permitida se o abrigo destino possui vagas disponíveis
-- Operadores só podem atualizar o abrigo ao qual estão vinculados
-- Gestores só visualizam e operam dentro de sua região
-
----
-
-## Estrutura do Projeto
-
-```
-src/main/java/br/com/fiap/vesta/
-├── config/          # SecurityConfig, CacheConfig, CorsConfig, OpenApiConfig, FeignConfig, SpringAiConfig
-├── security/        # JwtTokenProvider, JwtAuthenticationFilter, UserDetailsServiceImpl
-├── domain/
-│   ├── entity/      # 14 entidades JPA (Abrigo, Familia, Recurso, etc.)
-│   └── enums/       # 10 enums do domínio
-├── repository/      # 14 interfaces Spring Data JPA
-├── dto/
-│   ├── request/     # DTOs de entrada com validação Bean Validation
-│   └── response/    # DTOs de saída (records)
-├── service/         # Lógica de negócio
-├── controller/      # Controllers REST com HATEOAS
-├── client/          # Feign client para o serviço .NET
-└── exception/       # GlobalExceptionHandler e exceções customizadas
-
-src/main/resources/
-├── application.yml
-├── application-test.yml
-└── db/migration/    # Scripts Flyway (V6__create_tables, V7__seed_data, V8__fix_password_hashes, V9__alerta_add_id_recurso, V10__usuario_add_cpf_telefone, V11__usuario_add_id_regiao)
-```
-
----
-
-## Testes
-
-```bash
-# rodar todos os testes
-mvn test
-
-# rodar apenas testes de um módulo
-mvn test -Dtest=AbrigoServiceTest
-```
-
-Os testes de serviço usam Mockito (sem banco de dados). O perfil `test` é ativado automaticamente via `application-test.yml`, que desabilita o Flyway e configura o JWT para o ambiente de testes.
-
----
-
-## Integração com o Serviço .NET
-
-A API consome o serviço `.NET` de criticidade via OpenFeign. O cliente está em `CriticidadeClient` e usa fallback (`CriticidadeClientFallback`) quando o serviço estiver indisponível. Configure a URL via `DOTNET_URL`.
-
----
+# Vesta API – DevOps Tools & Cloud Computing
 
 ## Integrantes
 
-| Nome | RM |
-|---|---|
-| Gabriel | _(preencher)_ |
+- Vinícius da Silva Bitú – RM 560227
+- Gabriel Cruz Ferreira – RM 559613
+- João Victor Madella – RM 561007
+- Kauã Ferreira dos Santos – RM 560992
+- Nathália Mantovani – RM 559904
 
-**FIAP — 2TDSA — Global Solution 2026**
+---
+
+# 1. Descrição da Solução
+
+O Vesta é uma aplicação desenvolvida em Java utilizando Spring Boot com o objetivo de auxiliar instituições de acolhimento no gerenciamento de usuários, famílias, abrigos e recursos.
+
+A solução permite o controle dos recursos disponíveis em cada abrigo, mantendo as informações armazenadas em banco de dados Oracle.
+
+Para automatizar os processos de integração e entrega contínua, foi utilizada a plataforma Azure DevOps, integrando Azure Repos, Azure Boards e Azure Pipelines.
+
+---
+
+# 2. Arquitetura da Solução
+
+## Arquitetura Geral
+
+```text
+GitHub
+(Repositório de Código)
+      │
+      ▼
+Azure Repos
+      │
+      ▼
+Azure Pipeline (CI)
+Build Maven e geração do artefato
+      │
+      ▼
+Azure Pipeline (CD)
+Deploy automatizado
+      │
+      ▼
+Azure Web App
+(Java 21 + Spring Boot)
+      │
+      ▼
+Oracle Database
+(Banco de Dados)
+      ▲
+      │
+Usuário
+(Postman / Swagger)
+```
+
+## Fluxo de Execução
+
+1. O desenvolvedor realiza alterações no código.
+2. O código é enviado para o repositório.
+3. O Azure Pipelines inicia automaticamente a execução da pipeline.
+4. O Maven realiza a compilação da aplicação.
+5. O artefato é gerado.
+6. O deploy é realizado no Azure Web App.
+7. A API fica disponível para acesso.
+8. Os dados são persistidos no Oracle Database.
+
+---
+
+# 3. Recursos Provisionados em Nuvem
+
+Todos os recursos foram criados através do Azure CLI.
+
+## Resource Group
+
+```bash
+az group create \
+--name rg-vesta \
+--location brazilsouth
+```
+
+## App Service Plan
+
+```bash
+az appservice plan create \
+--name plan-vesta \
+--resource-group rg-vesta \
+--sku B1 \
+--is-linux
+```
+
+## Azure Web App
+
+```bash
+az webapp create \
+--resource-group rg-vesta \
+--plan plan-vesta \
+--name vestags \
+--runtime "JAVA:21-java21"
+```
+
+---
+
+# 4. Ferramentas Utilizadas
+
+- Azure DevOps
+- Azure Boards
+- Azure Repos
+- Azure Pipelines
+- Azure CLI
+- GitHub
+- Java 21
+- Spring Boot
+- Maven
+- Oracle Database
+- Azure App Service
+- Swagger
+- Postman
+
+---
+
+# 5. Estrutura do Projeto
+
+```text
+vesta-api
+│
+├── src
+│   ├── main
+│   ├── resources
+│   └── test
+│
+├── pom.xml
+├── azure-pipelines.yml
+└── README.md
+```
+
+---
+
+# 6. Pipeline CI/CD
+
+## Integração Contínua (CI)
+
+- Download do código-fonte
+- Restauração das dependências Maven
+- Compilação da aplicação
+- Execução do build
+- Geração do artefato
+
+## Entrega Contínua (CD)
+
+- Download do artefato
+- Publicação da aplicação
+- Deploy no Azure Web App
+- Disponibilização da API
+
+---
+
+# 7. Banco de Dados
+
+O projeto utiliza Oracle Database para armazenamento das informações da aplicação.
+
+## Principais Entidades
+
+### TB_REGIAO
+Armazena as regiões atendidas pelo sistema.
+
+### TB_INSTITUICAO
+Representa órgãos e instituições responsáveis pelos abrigos.
+
+### TB_PERFIL_ACESSO
+Controla os perfis de acesso dos usuários.
+
+### TB_ABRIGO
+Armazena os dados dos abrigos cadastrados.
+
+### TB_USUARIO
+Responsável pelo cadastro e autenticação dos usuários.
+
+### TB_FAMILIA
+Armazena as famílias atendidas pelos abrigos.
+
+### TB_PESSOA_ABRIGADA
+Controla as pessoas vinculadas às famílias acolhidas.
+
+### TB_RECURSO
+Armazena os recursos disponíveis para utilização nos abrigos.
+
+### TB_ESTOQUE_ABRIGO
+Controla a quantidade de recursos disponíveis em cada abrigo.
+
+### TB_OCORRENCIA
+Registra ocorrências operacionais e situações reportadas pelos usuários.
+
+### TB_SOLICITACAO_RECURSO
+Controla solicitações de recursos realizadas pelos abrigos.
+
+### TB_MOVIMENTACAO_RECURSO
+Registra entradas, saídas e ajustes de estoque.
+
+### TB_TRANSFERENCIA_ABRIGO
+Controla transferências de famílias entre abrigos.
+
+### TB_ALERTA
+Armazena alertas automáticos gerados pelo sistema.
+
+---
+
+# 8. Relacionamentos
+
+## Estrutura Principal
+
+```text
+TB_REGIAO
+    │
+    ├── TB_INSTITUICAO
+    │
+    └── TB_ABRIGO
+            │
+            ├── TB_USUARIO
+            │
+            ├── TB_FAMILIA
+            │       │
+            │       └── TB_PESSOA_ABRIGADA
+            │
+            ├── TB_ESTOQUE_ABRIGO
+            │       │
+            │       └── TB_RECURSO
+            │
+            ├── TB_OCORRENCIA
+            │
+            ├── TB_SOLICITACAO_RECURSO
+            │
+            └── TB_ALERTA
+```
+
+## Relacionamento utilizado na demonstração
+
+```text
+TB_ABRIGO
+      │
+      └── TB_ESTOQUE_ABRIGO
+                    │
+                    └── TB_RECURSO
+```
+
+Esse relacionamento permite controlar os recursos disponíveis em cada abrigo e a quantidade existente em estoque.
+---
+
+# 9. Exemplos de CRUD em JSON
+
+## Cadastro de Abrigo
+
+### POST /abrigos
+
+```json
+{
+  "nmAbrigo": "Abrigo Esperança",
+  "dsEndereco": "Rua das Flores, 100",
+  "qtCapacidadeMaxima": 80,
+  "idRegiao": 1,
+  "idInstituicao": 1
+}
+```
+
+## Cadastro de Usuário
+
+### POST /usuarios
+
+```json
+{
+  "nmUsuario": "Administrador",
+  "dsEmail": "admin@vesta.com",
+  "idPerfil": 1,
+  "idAbrigo": 1
+}
+```
+
+## Cadastro de Recurso
+
+### POST /recursos
+
+```json
+{
+  "nmRecurso": "Cesta Básica",
+  "tpRecurso": "ALIMENTO",
+  "dsUnidadeMedida": "UNIDADE"
+}
+```
+
+## Consulta
+
+### GET /abrigos
+
+```http
+GET /abrigos
+```
+
+## Atualização
+
+### PUT /estoques/1
+
+```json
+{
+  "qtAtual": 50
+}
+```
+
+## Exclusão
+
+### DELETE /recursos/1
+
+```http
+DELETE /recursos/1
+```
+
+---
+
+# 10. Comandos SQL Utilizados nos Testes
+
+## Inserção
+
+```sql
+INSERT INTO TB_ABRIGO (NOME, ENDERECO, CAPACIDADE)
+VALUES ('Abrigo Esperança', 'Rua das Flores, 100', 80);
+```
+
+## Consulta
+
+```sql
+SELECT * FROM TB_ABRIGO;
+```
+
+## Atualização
+
+```sql
+UPDATE TB_ESTOQUE_ABRIGO
+SET QUANTIDADE = 50
+WHERE ID_ESTOQUE = 1;
+```
+
+## Exclusão
+
+```sql
+DELETE FROM TB_ESTOQUE_ABRIGO
+WHERE ID_ESTOQUE = 1;
+```
+
+---
+
+# 11. Execução Local
+
+## Clonar Repositório
+
+```bash
+git clone 
+```
+
+## Acessar Projeto
+
+```bash
+cd vesta-api
+```
+
+## Executar Aplicação
+
+```bash
+mvn spring-boot:run
+```
+
+---
+
+# 12. Resultado Obtido
+
+Com a implementação realizada foi possível:
+
+- Automatizar o processo de build da aplicação.
+- Gerar artefatos através do Azure Pipelines.
+- Publicar a aplicação em um Azure Web App.
+- Disponibilizar a API para acesso externo.
+- Realizar testes através do Swagger e Postman.
+- Persistir dados em Oracle Database.
+- Integrar Azure Repos, Azure Boards e Azure Pipelines.
+
+---
+
+## Disciplina
+
+DevOps Tools & Cloud Computing
+
+## Curso
+
+Análise e Desenvolvimento de Sistemas – FIAP
+
+## Ano
+
+2026
