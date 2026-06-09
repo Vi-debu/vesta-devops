@@ -13,18 +13,33 @@ import java.util.List;
 public class AlertaService {
 
     private final AlertaRepository alertaRepository;
+    private final IsolamentoService isolamentoService;
 
-    public AlertaService(AlertaRepository alertaRepository) {
+    public AlertaService(AlertaRepository alertaRepository, IsolamentoService isolamentoService) {
         this.alertaRepository = alertaRepository;
+        this.isolamentoService = isolamentoService;
     }
 
     public List<AlertaResponse> listarAtivos() {
+        if (isolamentoService.isGestor()) {
+            Long idRegiao = isolamentoService.getIdRegiaoGestor();
+            if (idRegiao == null) return List.of();
+            return alertaRepository.findByAbrigoRegiaoIdRegiaoAndStStatus(idRegiao, "ATIVO")
+                .stream().map(this::toResponse).toList();
+        }
         return alertaRepository.findByStStatus("ATIVO").stream().map(this::toResponse).toList();
     }
 
     public List<AlertaResponse> listarPorAbrigo(Long idAbrigo) {
-        return alertaRepository.findByAbrigoIdAbrigoAndStStatus(idAbrigo, "ATIVO")
-            .stream().map(this::toResponse).toList();
+        List<Alerta> alertas = alertaRepository.findByAbrigoIdAbrigoAndStStatus(idAbrigo, "ATIVO");
+        if (isolamentoService.isGestor()) {
+            Long idRegiao = isolamentoService.getIdRegiaoGestor();
+            alertas = alertas.stream()
+                .filter(a -> a.getAbrigo().getRegiao() != null
+                    && a.getAbrigo().getRegiao().getIdRegiao().equals(idRegiao))
+                .toList();
+        }
+        return alertas.stream().map(this::toResponse).toList();
     }
 
     @Transactional
@@ -41,7 +56,8 @@ public class AlertaService {
             a.getIdAlerta(),
             a.getAbrigo().getIdAbrigo(), a.getAbrigo().getNmAbrigo(),
             a.getTpAlerta(), a.getDsMensagem(), a.getStStatus(),
-            a.getDtGeracao(), a.getDtResolucao()
+            a.getDtGeracao(), a.getDtResolucao(),
+            a.getRecurso() != null ? a.getRecurso().getIdRecurso() : null
         );
     }
 }

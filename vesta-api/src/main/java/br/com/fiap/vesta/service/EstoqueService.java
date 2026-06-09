@@ -12,6 +12,7 @@ import br.com.fiap.vesta.exception.ResourceNotFoundException;
 import br.com.fiap.vesta.repository.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -24,6 +25,7 @@ public class EstoqueService {
     private final UsuarioRepository usuarioRepository;
     private final SolicitacaoRecursoRepository solicitacaoRepository;
     private final AlertaRepository alertaRepository;
+    private final IsolamentoService isolamentoService;
 
     public EstoqueService(EstoqueAbrigoRepository estoqueRepository,
                           MovimentacaoRecursoRepository movimentacaoRepository,
@@ -31,7 +33,8 @@ public class EstoqueService {
                           AbrigoService abrigoService,
                           UsuarioRepository usuarioRepository,
                           SolicitacaoRecursoRepository solicitacaoRepository,
-                          AlertaRepository alertaRepository) {
+                          AlertaRepository alertaRepository,
+                          IsolamentoService isolamentoService) {
         this.estoqueRepository = estoqueRepository;
         this.movimentacaoRepository = movimentacaoRepository;
         this.recursoRepository = recursoRepository;
@@ -39,6 +42,7 @@ public class EstoqueService {
         this.usuarioRepository = usuarioRepository;
         this.solicitacaoRepository = solicitacaoRepository;
         this.alertaRepository = alertaRepository;
+        this.isolamentoService = isolamentoService;
     }
 
     public List<EstoqueResponse> listarPorAbrigo(Long idAbrigo) {
@@ -54,6 +58,7 @@ public class EstoqueService {
     @Transactional
     public MovimentacaoResponse registrarMovimentacao(Long idAbrigo, Long idUsuario,
                                                        MovimentacaoRequest request) {
+        isolamentoService.verificarAcessoAbrigo(idAbrigo);
         Abrigo abrigo = abrigoService.buscarPorId(idAbrigo);
         Recurso recurso = recursoRepository.findById(request.idRecurso())
             .orElseThrow(() -> new ResourceNotFoundException("Recurso", request.idRecurso()));
@@ -102,6 +107,7 @@ public class EstoqueService {
 
     @Transactional
     public EstoqueResponse definirMinimo(Long idAbrigo, EstoqueMinRequest request) {
+        isolamentoService.verificarAcessoAbrigo(idAbrigo);
         Abrigo abrigo = abrigoService.buscarPorId(idAbrigo);
         Recurso recurso = recursoRepository.findById(request.idRecurso())
             .orElseThrow(() -> new ResourceNotFoundException("Recurso", request.idRecurso()));
@@ -121,16 +127,26 @@ public class EstoqueService {
     private void verificarEstoqueCritico(Abrigo abrigo, EstoqueAbrigo estoque, Recurso recurso) {
         if (estoque.isAbaixoMinimo()) {
             boolean jaExiste = alertaRepository
-                .findByAbrigoIdAbrigoAndTpAlertaAndStStatus(abrigo.getIdAbrigo(), TipoAlerta.ESTOQUE_CRITICO, "ATIVO")
+                .findByAbrigoIdAbrigoAndTpAlertaAndRecursoIdRecursoAndStStatus(
+                    abrigo.getIdAbrigo(), TipoAlerta.ESTOQUE_CRITICO, recurso.getIdRecurso(), "ATIVO")
                 .isPresent();
             if (!jaExiste) {
                 Alerta alerta = new Alerta();
                 alerta.setAbrigo(abrigo);
+                alerta.setRecurso(recurso);
                 alerta.setTpAlerta(TipoAlerta.ESTOQUE_CRITICO);
                 alerta.setDsMensagem("Estoque crítico: " + recurso.getNmRecurso()
                     + " abaixo do mínimo (" + estoque.getQtAtual() + "/" + estoque.getQtMinima() + ")");
                 alertaRepository.save(alerta);
             }
+        } else {
+            alertaRepository.findByAbrigoIdAbrigoAndTpAlertaAndRecursoIdRecursoAndStStatus(
+                    abrigo.getIdAbrigo(), TipoAlerta.ESTOQUE_CRITICO, recurso.getIdRecurso(), "ATIVO")
+                .ifPresent(alerta -> {
+                    alerta.setStStatus("RESOLVIDO");
+                    alerta.setDtResolucao(LocalDateTime.now());
+                    alertaRepository.save(alerta);
+                });
         }
     }
 

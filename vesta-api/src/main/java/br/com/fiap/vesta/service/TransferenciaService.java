@@ -22,19 +22,22 @@ public class TransferenciaService {
     private final AbrigoRepository abrigoRepository;
     private final AbrigoService abrigoService;
     private final UsuarioRepository usuarioRepository;
+    private final IsolamentoService isolamentoService;
 
     public TransferenciaService(TransferenciaAbrigoRepository transferenciaRepository,
                                  FamiliaRepository familiaRepository,
                                  PessoaAbrigadaRepository pessoaRepository,
                                  AbrigoRepository abrigoRepository,
                                  AbrigoService abrigoService,
-                                 UsuarioRepository usuarioRepository) {
+                                 UsuarioRepository usuarioRepository,
+                                 IsolamentoService isolamentoService) {
         this.transferenciaRepository = transferenciaRepository;
         this.familiaRepository = familiaRepository;
         this.pessoaRepository = pessoaRepository;
         this.abrigoRepository = abrigoRepository;
         this.abrigoService = abrigoService;
         this.usuarioRepository = usuarioRepository;
+        this.isolamentoService = isolamentoService;
     }
 
     public List<TransferenciaResponse> listarPorAbrigo(Long idAbrigo) {
@@ -105,6 +108,9 @@ public class TransferenciaService {
         pessoas.forEach(p -> { p.setAbrigo(destino); pessoaRepository.save(p); });
         abrigoRepository.save(origem);
         abrigoRepository.save(destino);
+        if (destino.getStStatus() == StatusAbrigo.LOTADO) {
+            abrigoService.gerarAlertaLotacao(destino);
+        }
 
         t.setStStatus(StatusTransferencia.CONCLUIDA);
         t.setDtConclusao(LocalDateTime.now());
@@ -117,6 +123,9 @@ public class TransferenciaService {
             .orElseThrow(() -> new ResourceNotFoundException("TransferenciaAbrigo", id));
         if (t.getStStatus() != StatusTransferencia.PENDENTE) {
             throw new BusinessRuleException("Somente transferências PENDENTES podem ser aprovadas.");
+        }
+        if (t.getAbrigoDestino().getRegiao() != null) {
+            isolamentoService.verificarAcessoRegiao(t.getAbrigoDestino().getRegiao().getIdRegiao());
         }
         t.setStStatus(StatusTransferencia.APROVADA);
         return toResponse(transferenciaRepository.save(t));

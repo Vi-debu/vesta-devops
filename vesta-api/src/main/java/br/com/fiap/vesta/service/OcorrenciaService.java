@@ -20,15 +20,18 @@ public class OcorrenciaService {
     private final AbrigoService abrigoService;
     private final UsuarioRepository usuarioRepository;
     private final AlertaRepository alertaRepository;
+    private final IsolamentoService isolamentoService;
 
     public OcorrenciaService(OcorrenciaRepository ocorrenciaRepository,
                               AbrigoService abrigoService,
                               UsuarioRepository usuarioRepository,
-                              AlertaRepository alertaRepository) {
+                              AlertaRepository alertaRepository,
+                              IsolamentoService isolamentoService) {
         this.ocorrenciaRepository = ocorrenciaRepository;
         this.abrigoService = abrigoService;
         this.usuarioRepository = usuarioRepository;
         this.alertaRepository = alertaRepository;
+        this.isolamentoService = isolamentoService;
     }
 
     public List<OcorrenciaResponse> listarPorAbrigo(Long idAbrigo) {
@@ -43,6 +46,7 @@ public class OcorrenciaService {
 
     @Transactional
     public OcorrenciaResponse criar(Long idAbrigo, Long idUsuario, OcorrenciaRequest request) {
+        isolamentoService.verificarAcessoAbrigo(idAbrigo);
         Abrigo abrigo = abrigoService.buscarPorId(idAbrigo);
         Usuario usuario = usuarioRepository.findById(idUsuario)
             .orElseThrow(() -> new ResourceNotFoundException("Usuario", idUsuario));
@@ -67,6 +71,7 @@ public class OcorrenciaService {
     public OcorrenciaResponse atualizarStatus(Long id, StatusOcorrencia novoStatus) {
         Ocorrencia oc = ocorrenciaRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Ocorrencia", id));
+        isolamentoService.verificarAcessoAbrigo(oc.getAbrigo().getIdAbrigo());
         oc.setStStatus(novoStatus);
         if (novoStatus == StatusOcorrencia.RESOLVIDA) {
             oc.setDtResolucao(LocalDateTime.now());
@@ -75,11 +80,17 @@ public class OcorrenciaService {
     }
 
     private void gerarAlertaOcorrenciaCritica(Abrigo abrigo, String titulo) {
-        Alerta alerta = new Alerta();
-        alerta.setAbrigo(abrigo);
-        alerta.setTpAlerta(TipoAlerta.OCORRENCIA_CRITICA);
-        alerta.setDsMensagem("Ocorrência crítica registrada: " + titulo);
-        alertaRepository.save(alerta);
+        boolean jaExiste = alertaRepository
+            .findByAbrigoIdAbrigoAndTpAlertaAndStStatus(
+                abrigo.getIdAbrigo(), TipoAlerta.OCORRENCIA_CRITICA, "ATIVO")
+            .isPresent();
+        if (!jaExiste) {
+            Alerta alerta = new Alerta();
+            alerta.setAbrigo(abrigo);
+            alerta.setTpAlerta(TipoAlerta.OCORRENCIA_CRITICA);
+            alerta.setDsMensagem("Ocorrência crítica registrada: " + titulo);
+            alertaRepository.save(alerta);
+        }
     }
 
     private OcorrenciaResponse toResponse(Ocorrencia o) {

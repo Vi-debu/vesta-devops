@@ -18,15 +18,20 @@ spring:
     enabled: true
     locations: classpath:db/migration
     baseline-on-migrate: false
+    ignore-migration-patterns: "*:missing,*:future"
   cache:
     type: caffeine
     caffeine:
       spec: maximumSize=500,expireAfterWrite=300s
+  cloud:
+    openfeign:
+      circuitbreaker:
+        enabled: true
   ai:
     azure:
       openai:
-        api-key: ${AZURE_OPENAI_API_KEY:}
-        endpoint: ${AZURE_OPENAI_ENDPOINT:}
+        api-key: ${AZURE_OPENAI_API_KEY:placeholder-key}
+        endpoint: ${AZURE_OPENAI_ENDPOINT:https://placeholder.openai.azure.com}
         chat:
           options:
             deployment-name: ${AZURE_OPENAI_DEPLOYMENT:gpt-4o}
