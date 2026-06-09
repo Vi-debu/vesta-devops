@@ -1,5 +1,12 @@
 trigger:
-- master
+  branches:
+    include:
+      - master
+
+pr:
+  branches:
+    include:
+      - master
 
 pool:
   vmImage: 'ubuntu-22.04'
@@ -12,6 +19,7 @@ stages:
   displayName: Build Java
   jobs:
   - job: BuildJava
+    displayName: Build, Test and Publish
     steps:
     - task: Cache@2
       inputs:
@@ -27,22 +35,34 @@ stages:
         jdkSourceOption: 'PreInstalled'
 
     - task: Maven@4
+      displayName: Maven clean package
       inputs:
         mavenPomFile: 'vesta-api/pom.xml'
-        goals: 'clean package -DskipTests'
+        goals: 'clean package'
         options: '$(MAVEN_OPTS)'
-        publishJUnitResults: false
+        publishJUnitResults: true
+        testResultsFiles: '**/surefire-reports/TEST-*.xml'
         javaHomeOption: 'JDKVersion'
         jdkVersionOption: '1.17'
         mavenVersionOption: 'Default'
 
+    - task: PublishTestResults@2
+      displayName: Publish test results
+      inputs:
+        testResultsFormat: 'JUnit'
+        testResultsFiles: '**/surefire-reports/TEST-*.xml'
+        failTaskOnFailedTests: true
+      condition: succeededOrFailed()
+
     - task: CopyFiles@2
+      displayName: Copy jar artifact
       inputs:
         SourceFolder: 'vesta-api/target'
         Contents: '*.jar'
         TargetFolder: '$(Build.ArtifactStagingDirectory)'
 
     - task: PublishBuildArtifacts@1
+      displayName: Publish artifact
       inputs:
         PathtoPublish: '$(Build.ArtifactStagingDirectory)'
         ArtifactName: 'drop'
@@ -51,7 +71,7 @@ stages:
 - stage: Deploy
   displayName: Deploy Azure Web App
   dependsOn: Build
-  condition: succeeded()
+  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
   jobs:
   - deployment: DeployWebApp
     environment: production
