@@ -72,7 +72,10 @@ Infra criada por Azure CLI:
 - Resource Group
 - App Service Plan
 - Web App
+
 ```
+<img width="1024" height="1536" alt="image" src="https://github.com/user-attachments/assets/dd337963-37d4-400d-9b00-9ecc6d4e29da" />
+
 
 ## Fluxo de Execução
 
