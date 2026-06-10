@@ -74,7 +74,7 @@ Infra criada por Azure CLI:
 - Web App
 
 ```
-<img width="1024" height="1536" alt="image" src="https://github.com/user-attachments/assets/dd337963-37d4-400d-9b00-9ecc6d4e29da" />
+<img width="750" height="750" alt="image" src="https://github.com/user-attachments/assets/dd337963-37d4-400d-9b00-9ecc6d4e29da" />
 
 
 ## Fluxo de Execução
@@ -410,10 +410,7 @@ Com a implementação realizada foi possível:
 
 DevOps Tools & Cloud Computing
 
-## Curso
+## Links
 
-Análise e Desenvolvimento de Sistemas – FIAP
-
-## Ano
-
-2026
+** youtube - 
+** github - 
