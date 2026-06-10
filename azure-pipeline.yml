@@ -88,5 +88,5 @@ stages:
               appType: 'webAppLinux'
               appName: 'vestags'
               package: '$(Pipeline.Workspace)/drop/*.jar'
-              runtimeStack: 'JAVA|21-java21'
+              runtimeStack: 'JAVA|17-java17'
               startUpCommand: 'java -jar /home/site/wwwroot/vesta-api-0.0.1-SNAPSHOT.jar'
