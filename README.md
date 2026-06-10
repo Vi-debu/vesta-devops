@@ -75,7 +75,7 @@ Infra criada por Azure CLI:
 
 ```
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/dd337963-37d4-400d-9b00-9ecc6d4e29da" alt="Arquitetura Vesta" width="570">
+  <img src="https://github.com/user-attachments/assets/dd337963-37d4-400d-9b00-9ecc6d4e29da" alt="Arquitetura Vesta" width="470">
   <br>
   <em>Figura 1 – Arquitetura da solução Vesta utilizando Azure DevOps e Azure App Service.</em>
 </p>
