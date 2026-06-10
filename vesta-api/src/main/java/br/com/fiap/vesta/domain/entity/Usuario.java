@@ -29,16 +29,6 @@ public class Usuario {
     @JoinColumn(name = "id_abrigo")
     private Abrigo abrigo;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_regiao")
-    private Regiao regiao;
-
-    @Column(name = "nr_cpf", length = 14, unique = true)
-    private String nrCpf;
-
-    @Column(name = "nr_telefone", length = 20)
-    private String nrTelefone;
-
     @Column(name = "st_ativo", nullable = false, length = 1)
     private String stAtivo = "S";
 
@@ -47,30 +37,35 @@ public class Usuario {
 
     @PrePersist
     void prePersist() {
-        if (dtCriacao == null) dtCriacao = LocalDateTime.now();
+        if (dtCriacao == null) {
+            dtCriacao = LocalDateTime.now();
+        }
     }
 
-    public boolean isAtivo() { return "S".equals(stAtivo); }
+    public boolean isAtivo() {
+        return "S".equals(stAtivo);
+    }
 
     public Long getIdUsuario() { return idUsuario; }
     public void setIdUsuario(Long idUsuario) { this.idUsuario = idUsuario; }
+
     public String getNmUsuario() { return nmUsuario; }
     public void setNmUsuario(String nmUsuario) { this.nmUsuario = nmUsuario; }
+
     public String getDsEmail() { return dsEmail; }
     public void setDsEmail(String dsEmail) { this.dsEmail = dsEmail; }
+
     public String getDsSenhaHash() { return dsSenhaHash; }
     public void setDsSenhaHash(String dsSenhaHash) { this.dsSenhaHash = dsSenhaHash; }
+
     public PerfilAcesso getPerfil() { return perfil; }
     public void setPerfil(PerfilAcesso perfil) { this.perfil = perfil; }
+
     public Abrigo getAbrigo() { return abrigo; }
     public void setAbrigo(Abrigo abrigo) { this.abrigo = abrigo; }
-    public String getNrCpf() { return nrCpf; }
-    public void setNrCpf(String nrCpf) { this.nrCpf = nrCpf; }
-    public String getNrTelefone() { return nrTelefone; }
-    public void setNrTelefone(String nrTelefone) { this.nrTelefone = nrTelefone; }
-    public Regiao getRegiao() { return regiao; }
-    public void setRegiao(Regiao regiao) { this.regiao = regiao; }
+
     public String getStAtivo() { return stAtivo; }
     public void setStAtivo(String stAtivo) { this.stAtivo = stAtivo; }
+
     public LocalDateTime getDtCriacao() { return dtCriacao; }
 }
