@@ -94,7 +94,7 @@ az webapp create \
 --resource-group rg-vesta \
 --plan plan-vesta \
 --name vestags \
---runtime "JAVA:21-java21"
+--runtime "JAVA:17-java17"
 ```
 
 ---
