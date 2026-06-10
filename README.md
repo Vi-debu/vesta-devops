@@ -25,31 +25,53 @@ Para automatizar os processos de integração e entrega contínua, foi utilizada
 ## Arquitetura Geral
 
 ```text
-GitHub
-(Repositório de Código)
-      │
-      ▼
-Azure Repos
-      │
-      ▼
-Azure Pipeline (CI)
-Build Maven e geração do artefato
-      │
-      ▼
-Azure Pipeline (CD)
-Deploy automatizado
-      │
-      ▼
-Azure Web App
-(Java 21 + Spring Boot)
-      │
-      ▼
-Oracle Database
-(Banco de Dados)
-      ▲
-      │
-Usuário
-(Postman / Swagger)
+                    ARQUITETURA VESTA
+
+┌────────────────────┐
+│ Azure Boards       │
+│ User Stories       │
+└─────────┬──────────┘
+          │
+          ▼
+┌────────────────────┐
+│ Azure Repos        │
+│ Código Fonte Java  │
+└─────────┬──────────┘
+          │ Commit
+          ▼
+┌────────────────────┐
+│ Azure Pipelines CI │
+│ Maven Build        │
+│ Testes             │
+│ Artifact           │
+└─────────┬──────────┘
+          │
+          ▼
+┌────────────────────┐
+│ Azure Pipelines CD │
+│ Deploy Automático  │
+└─────────┬──────────┘
+          │
+          ▼
+┌────────────────────┐
+│ Azure App Service  │
+│ Vesta API          │
+└──────┬───────┬─────┘
+       │       │
+       │       ▼
+       │   Postman
+       │   Testes API
+       │
+       ▼
+┌────────────────────┐
+│ Oracle Database    │
+│ Dados Persistidos  │
+└────────────────────┘
+
+Infra criada por Azure CLI:
+- Resource Group
+- App Service Plan
+- Web App
 ```
 
 ## Fluxo de Execução
