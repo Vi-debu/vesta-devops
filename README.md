@@ -59,7 +59,7 @@ Para automatizar os processos de integração e entrega contínua, foi utilizada
 └──────┬───────┬─────┘
        │       │
        │       ▼
-       │   Postman
+       │      Swagger
        │   Testes API
        │
        ▼
@@ -142,7 +142,6 @@ az webapp create \
 - Oracle Database
 - Azure App Service
 - Swagger
-- Postman
 
 ---
 
