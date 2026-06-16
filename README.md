@@ -74,7 +74,8 @@ Infra criada por Azure CLI:
 - Web App
 
 ```
-<img width="750" height="750" alt="image" src="https://github.com/user-attachments/assets/16036f0a-2f53-4030-9f2f-856bf4ce82ac" />
+<img width="644" height="483" alt="image" src="https://github.com/user-attachments/assets/bfe512e9-5521-4998-862d-f569d290bb0b" />
+
 
 
 
